@@ -1,40 +1,41 @@
-import altair as alt
-import numpy as np
-import pandas as pd
 import streamlit as st
+import pandas as pd
 
-"""
-# Welcome to Streamlit!
+# Load the dataset
+@st.cache
+def load_data():
+    return pd.read_csv('telecom_customer_churn.csv')
 
-Edit `/streamlit_app.py` to customize this app to your heart's desire :heart:.
-If you have any questions, checkout our [documentation](https://docs.streamlit.io) and [community
-forums](https://discuss.streamlit.io).
+df = load_data()
 
-In the meantime, below is an example of what you can do with just a few lines of code:
-"""
+# Calculate total customers and churn
+total_customers = len(df)
+total_churn = df['Churn'].sum()
 
-num_points = st.slider("Number of points in spiral", 1, 10000, 1100)
-num_turns = st.slider("Number of turns in spiral", 1, 300, 31)
+# Display total customers and churn
+st.title('Churn Analysis')
+st.write(f'Total Customers: {total_customers}')
+st.write(f'Total Churn: {total_churn}')
 
-indices = np.linspace(0, 1, num_points)
-theta = 2 * np.pi * num_turns * indices
-radius = indices
+# Customer ID input
+customer_id = st.text_input('Enter Customer ID')
 
-x = radius * np.cos(theta)
-y = radius * np.sin(theta)
+# Function to get churn prediction and reason
+def predict_churn_and_reason(customer_id):
+    if customer_id:
+        customer_row = df[df['Customer ID'] == customer_id]
+        if not customer_row.empty:
+            churn_prediction = 'Yes' if customer_row['Churn'].iloc[0] == 'Yes' else 'No'
+            churn_reason = customer_row['Churn Reason'].iloc[0]
+            return churn_prediction, churn_reason
+        else:
+            return 'Customer ID not found', ''
+    else:
+        return '', ''
 
-df = pd.DataFrame({
-    "x": x,
-    "y": y,
-    "idx": indices,
-    "rand": np.random.randn(num_points),
-})
-
-st.altair_chart(alt.Chart(df, height=700, width=700)
-    .mark_point(filled=True)
-    .encode(
-        x=alt.X("x", axis=None),
-        y=alt.Y("y", axis=None),
-        color=alt.Color("idx", legend=None, scale=alt.Scale()),
-        size=alt.Size("rand", legend=None, scale=alt.Scale(range=[1, 150])),
-    ))
+# Button to get churn prediction and reason
+if st.button('Enter Customer ID'):
+    churn_prediction, churn_reason = predict_churn_and_reason(customer_id)
+    st.write(f'Customer ID: {customer_id}')
+    st.write(f'Expected to Churn: {churn_prediction}')
+    st.write(f'Reason for Churn: {churn_reason}')
